@@ -1,0 +1,82 @@
+<div class="flex h-screen">
+  <%# Sidebar %>
+  <div class="w-64 bg-[#f9f9f9] flex flex-col shrink-0 border-r border-gray-200">
+    <div class="p-2">
+      <%= form_with url: conversations_path, method: :post, id: "new-chat-form" do |f| %>
+        <input type="hidden" name="model_id" id="new-chat-model-id" value="<%= @conversation&.model_id || Conversation::MODELS.values.first.first[:id] %>">
+        <button type="submit" class="w-full flex items-center gap-2 text-sm text-gray-700 hover:bg-gray-200 rounded-lg px-3 py-3 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          New chat
+        </button>
+      <% end %>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
+      <% @conversations.each do |conversation| %>
+        <%= render partial: "conversations/conversation", locals: { conversation: conversation, selected: @conversation&.id == conversation.id } %>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Main Chat Area %>
+  <div class="flex-1 flex flex-col min-w-0 bg-white">
+    <% if @conversation %>
+      <div class="flex flex-col h-full" data-controller="chat" data-chat-url-value="<%= conversation_messages_path(@conversation) %>">
+        <%# Model selector at top %>
+        <div class="px-4 pt-3 pb-1">
+          <%= form_with url: conversation_path(@conversation), method: :patch, data: { turbo: true } do %>
+            <select name="model_id" onchange="this.form.requestSubmit()" class="bg-transparent text-gray-800 hover:text-black text-sm font-semibold py-1 pr-6 border-0 focus:outline-none focus:ring-0 cursor-pointer appearance-none" style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 fill=%22%236b7280%22 viewBox=%220 0 20 20%22><path d=%22M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z%22/></svg>'); background-repeat: no-repeat; background-position: right 0 center;">
+              <% Conversation::MODELS.each do |provider, models| %>
+                <optgroup label="<%= provider %>">
+                  <% models.each do |model| %>
+                    <option value="<%= model[:id] %>" <%= 'selected' if @conversation.model_id == model[:id] %>><%= model[:name] %></option>
+                  <% end %>
+                </optgroup>
+              <% end %>
+            </select>
+          <% end %>
+        </div>
+
+        <%# Messages %>
+        <div class="flex-1 overflow-y-auto" data-chat-target="messages">
+          <% @messages.each do |message| %>
+            <%= render partial: "messages/message", locals: { message: message } %>
+          <% end %>
+        </div>
+
+        <%# Input Area %>
+        <div class="pb-6 pt-2 px-4">
+          <div class="max-w-3xl mx-auto">
+            <form data-action="submit->chat#send" data-chat-target="form" class="relative">
+              <textarea
+                data-chat-target="input"
+                data-action="keydown->chat#keydown input->chat#autoResize"
+                rows="1"
+                placeholder="Ask anything"
+                class="w-full bg-[#f4f4f4] text-gray-800 rounded-2xl pl-4 pr-12 py-3 resize-none border-0 focus:outline-none focus:ring-1 focus:ring-gray-300 placeholder-gray-400 text-sm leading-6 max-h-48 overflow-y-auto"
+              ></textarea>
+              <button type="submit" data-chat-target="submit" class="absolute right-3 top-1/2 -translate-y-1/2 bg-black hover:bg-gray-700 text-white rounded-full p-1.5 transition disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-black">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    <% else %>
+      <div class="flex-1 flex flex-col items-center justify-center">
+        <h1 class="text-2xl font-semibold text-gray-800 mb-8">What can I help with?</h1>
+        <div>
+          <select id="landing-model-select" onchange="document.getElementById('new-chat-model-id').value = this.value" class="bg-[#f4f4f4] text-gray-600 text-sm rounded-lg px-3 py-2 border-0 focus:outline-none focus:ring-1 focus:ring-gray-300 cursor-pointer">
+            <% Conversation::MODELS.each do |provider, models| %>
+              <optgroup label="<%= provider %>">
+                <% models.each do |model| %>
+                  <option value="<%= model[:id] %>"><%= model[:name] %></option>
+                <% end %>
+              </optgroup>
+            <% end %>
+          </select>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
