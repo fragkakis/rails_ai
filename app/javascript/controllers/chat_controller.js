@@ -71,18 +71,48 @@ export default class extends Controller {
     return textDiv
   }
 
+  getSelectedProvider() {
+    const option = this.modelTarget.selectedOptions[0]
+    if (option && option.parentElement.tagName === "OPTGROUP") {
+      return option.parentElement.label.replace(/\s*\(Free\)$/, "")
+    }
+    return null
+  }
+
+  getApiKey() {
+    const provider = this.getSelectedProvider()
+    if (!provider) return null
+    const freeProviders = ["Gemini"]
+    if (freeProviders.includes(provider)) return null
+    return localStorage.getItem(`apiKey:${provider}`)
+  }
+
   async streamResponse(content, textEl) {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+    const apiKey = this.getApiKey()
+
+    const headers = {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-CSRF-Token": csrfToken
+    }
+    if (apiKey) {
+      headers["X-Api-Key"] = apiKey
+    }
 
     try {
       const response = await fetch(this.urlValue, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "X-CSRF-Token": csrfToken
-        },
+        headers,
         body: new URLSearchParams({ content })
       })
+
+      // Handle non-SSE error responses (e.g. 422 for missing API key)
+      if (!response.ok) {
+        const data = await response.json()
+        textEl.textContent = `Error: ${data.error || "Request failed"}`
+        this.onDone()
+        return
+      }
 
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
