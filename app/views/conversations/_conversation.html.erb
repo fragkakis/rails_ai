@@ -1,6 +1,6 @@
 <div class="group flex items-center rounded-lg <%= selected ? 'bg-gray-200' : 'hover:bg-gray-100' %> transition">
   <%= link_to conversation_path(conversation),
-        class: "flex-1 block px-3 py-2 text-sm truncate #{selected ? 'text-gray-900 font-medium' : 'text-gray-700 hover:text-gray-900'}" do %>
+        class: "flex-1 block px-3 py-2 text-base truncate #{selected ? 'text-gray-900 font-medium' : 'text-gray-700 hover:text-gray-900'}" do %>
     <%= conversation.title || "New Chat" %>
   <% end %>
   <%= button_to conversation_path(conversation),

@@ -64,7 +64,7 @@ export default class extends Controller {
     }
 
     const textDiv = document.createElement("div")
-    textDiv.className = "text-sm leading-7 text-gray-800 whitespace-pre-wrap"
+    textDiv.className = "text-base leading-7 text-gray-800 whitespace-pre-wrap"
     textDiv.textContent = content
 
     messageDiv.appendChild(textDiv)
