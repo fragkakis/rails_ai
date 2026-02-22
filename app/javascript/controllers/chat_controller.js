@@ -14,6 +14,11 @@ export default class extends Controller {
     const content = this.inputTarget.value.trim()
     if (!content) return
 
+    if (this.requiresKeyWithout()) {
+      this.openKeysPanel()
+      return
+    }
+
     this.inputTarget.value = ""
     this.inputTarget.style.height = "auto"
     this.submitTarget.disabled = true
@@ -85,6 +90,24 @@ export default class extends Controller {
     const freeProviders = ["Gemini"]
     if (freeProviders.includes(provider)) return null
     return localStorage.getItem(`apiKey:${provider}`)
+  }
+
+  requiresKeyWithout() {
+    const provider = this.getSelectedProvider()
+    if (!provider) return false
+    const freeProviders = ["Gemini"]
+    if (freeProviders.includes(provider)) return false
+    return !localStorage.getItem(`apiKey:${provider}`)
+  }
+
+  openKeysPanel() {
+    const details = document.querySelector('[data-controller="api-keys"] details')
+    if (details) details.open = true
+
+    const provider = this.getSelectedProvider()
+    const inputTarget = provider === "OpenAI" ? "openaiInput" : "mistralInput"
+    const input = document.querySelector(`[data-api-keys-target="${inputTarget}"]`)
+    if (input) input.focus()
   }
 
   async streamResponse(content, textEl) {
@@ -166,6 +189,10 @@ export default class extends Controller {
   }
 
   async changeModel() {
+    if (this.requiresKeyWithout()) {
+      this.openKeysPanel()
+    }
+
     const modelId = this.modelTarget.value
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
     const url = this.urlValue.replace(/\/messages$/, "")
