@@ -6,6 +6,22 @@ export default class extends Controller {
 
   connect() {
     this.autoResize()
+    this.sendInitialContent()
+  }
+
+  sendInitialContent() {
+    const url = new URL(window.location)
+    const content = url.searchParams.get("content")
+    if (!content) return
+
+    // Clean up the URL
+    url.searchParams.delete("content")
+    window.history.replaceState({}, "", url)
+
+    this.appendMessage("user", content)
+    const contentEl = this.appendMessage("assistant", "")
+    this.submitTarget.disabled = true
+    this.streamResponse(content, contentEl)
   }
 
   send(event) {

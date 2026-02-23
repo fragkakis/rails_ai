@@ -14,7 +14,11 @@ class ConversationsController < ApplicationController
 
   def create
     @conversation = Conversation.create!(model_id: params[:model_id], session_id: current_session_id)
-    redirect_to conversation_path(@conversation)
+    if params[:content].present?
+      redirect_to conversation_path(@conversation, content: params[:content])
+    else
+      redirect_to conversation_path(@conversation)
+    end
   end
 
   def update

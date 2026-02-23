@@ -130,16 +130,34 @@
     <% else %>
       <div class="flex-1 flex flex-col items-center justify-center px-4">
         <h1 class="text-2xl font-semibold text-gray-800 mb-8">What can I help with?</h1>
-        <div>
-          <select id="landing-model-select" onchange="document.getElementById('new-chat-model-id').value = this.value" class="bg-[#f4f4f4] text-gray-600 text-sm rounded-lg px-3 py-2 border-0 focus:outline-none focus:ring-1 focus:ring-gray-300 cursor-pointer">
-            <% Conversation::MODELS.each do |provider, models| %>
-              <optgroup label="<%= provider %><%= ' (Free)' if Conversation::FREE_PROVIDERS.include?(provider) %>">
-                <% models.each do |model| %>
-                  <option value="<%= model[:id] %>"><%= model[:name] %><%= ' — Free' if Conversation::FREE_PROVIDERS.include?(provider) %></option>
-                <% end %>
-              </optgroup>
-            <% end %>
-          </select>
+        <div class="w-full max-w-3xl px-3 md:px-4">
+          <%= form_with url: conversations_path, method: :post, data: { controller: "landing-chat", action: "submit->landing-chat#send keydown->landing-chat#keydown" } do |f| %>
+            <div class="bg-[#f4f4f4] rounded-2xl">
+              <textarea
+                name="content"
+                data-landing-chat-target="input"
+                data-action="input->landing-chat#autoResize"
+                rows="1"
+                placeholder="Ask anything"
+                autofocus
+                class="w-full bg-transparent text-gray-800 pl-4 pr-4 pt-3 pb-1 resize-none border-0 focus:outline-none focus:ring-0 placeholder-gray-400 text-base leading-6 max-h-48 overflow-y-auto"
+              ></textarea>
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.75rem 0.5rem;">
+                <select name="model_id" onchange="document.getElementById('new-chat-model-id').value = this.value" class="bg-white text-gray-700 text-xs font-medium rounded-lg px-2 py-1.5 border border-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-300 cursor-pointer">
+                  <% Conversation::MODELS.each do |provider, models| %>
+                    <optgroup label="<%= provider %><%= ' (Free)' if Conversation::FREE_PROVIDERS.include?(provider) %>">
+                      <% models.each do |model| %>
+                        <option value="<%= model[:id] %>"><%= model[:name] %><%= ' — Free' if Conversation::FREE_PROVIDERS.include?(provider) %></option>
+                      <% end %>
+                    </optgroup>
+                  <% end %>
+                </select>
+                <button type="submit" class="bg-black hover:bg-gray-700 text-white rounded-full p-1.5 transition disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-black">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+            </div>
+          <% end %>
         </div>
       </div>
     <% end %>
