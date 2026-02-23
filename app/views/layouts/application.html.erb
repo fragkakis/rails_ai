@@ -1,13 +1,20 @@
 <!DOCTYPE html>
-<html class="h-full">
+<html lang="en" class="h-full">
   <head>
+    <meta charset="utf-8">
     <title><%= content_for(:title) || "Rails AI Chat" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="description" content="Free AI chat powered by Gemini, with support for OpenAI and Mistral via your own API keys. Built with Rails.">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Rails AI Chat">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="canonical" href="<%= request.base_url + request.path %>">
     <meta property="og:title" content="Rails AI Chat">
     <meta property="og:description" content="Free AI chat powered by Gemini, with support for OpenAI and Mistral via your own API keys. Built with Rails.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="<%= request.original_url %>">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="Rails AI Chat">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Rails AI Chat">
     <meta name="twitter:description" content="Free AI chat powered by Gemini, with support for OpenAI and Mistral via your own API keys. Built with Rails.">
