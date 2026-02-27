@@ -216,7 +216,7 @@ export default class extends Controller {
 
     const messageDiv = document.createElement("div")
     if (role === "user") {
-      messageDiv.className = "ml-auto bg-[#f4f4f4] rounded-2xl px-4 py-2.5 max-w-[85%]"
+      messageDiv.className = "ml-auto bg-[#f4f4f4] dark:bg-gray-700 rounded-2xl px-4 py-2.5 max-w-[85%]"
     } else {
       messageDiv.className = "flex-1 min-w-0"
     }
@@ -224,10 +224,10 @@ export default class extends Controller {
     const textDiv = document.createElement("div")
     textDiv.setAttribute("data-role", role)
     if (role === "user") {
-      textDiv.className = "text-base leading-7 text-gray-800 whitespace-pre-wrap"
+      textDiv.className = "text-base leading-7 text-gray-800 dark:text-gray-100 whitespace-pre-wrap"
       textDiv.textContent = content
     } else {
-      textDiv.className = "text-base leading-7 text-gray-800 markdown-body"
+      textDiv.className = "text-base leading-7 text-gray-800 dark:text-gray-100 markdown-body"
       if (content) {
         textDiv.innerHTML = renderMarkdown(content)
       }
@@ -242,7 +242,7 @@ export default class extends Controller {
       const copyBtn = document.createElement("button")
       copyBtn.setAttribute("data-copy-button", "")
       copyBtn.setAttribute("data-action", "click->chat#copy")
-      copyBtn.className = "hidden text-gray-400 hover:text-gray-600 transition"
+      copyBtn.className = "hidden text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition"
       copyBtn.title = "Copy to clipboard"
       copyBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
       btnGroup.appendChild(copyBtn)
@@ -250,7 +250,7 @@ export default class extends Controller {
       const retryBtn = document.createElement("button")
       retryBtn.setAttribute("data-retry-button", "")
       retryBtn.setAttribute("data-action", "click->chat#retry")
-      retryBtn.className = "hidden text-gray-400 hover:text-gray-600 transition"
+      retryBtn.className = "hidden text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition"
       retryBtn.title = "Regenerate response"
       retryBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
       btnGroup.appendChild(retryBtn)
