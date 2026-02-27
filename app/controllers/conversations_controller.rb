@@ -25,7 +25,10 @@ class ConversationsController < ApplicationController
     conversation = Conversation.for_session(current_session_id).find_by!(uuid: params[:id])
     conversation.update!(model_id: params[:model_id])
 
-    redirect_to conversation_path(conversation)
+    respond_to do |format|
+      format.json { render json: { model_id: conversation.model_id } }
+      format.html { redirect_to conversation_path(conversation) }
+    end
   end
 
   def generate_title

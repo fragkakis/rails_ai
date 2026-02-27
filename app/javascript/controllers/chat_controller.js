@@ -468,7 +468,22 @@ export default class extends Controller {
 
     if (this.requiresKeyWithout()) {
       this.openKeysPanel()
+      return
     }
+
+    const modelId = this.modelTarget.value
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+    const conversationUuid = this.conversationUuidValue
+
+    fetch(`/conversations/${conversationUuid}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": csrfToken,
+        "Accept": "application/json"
+      },
+      body: new URLSearchParams({ model_id: modelId })
+    })
   }
 
   scrollToBottom() {

@@ -44,4 +44,34 @@ class ConversationsControllerTest < ActionDispatch::IntegrationTest
     get conversation_path(other)
     assert_response :not_found
   end
+
+  test "update changes model_id via JSON" do
+    conversation = conversations(:gemini_chat)
+    patch conversation_path(conversation),
+      params: { model_id: "gpt-4o" },
+      headers: { "Accept" => "application/json" }
+
+    assert_response :success
+    json = JSON.parse(response.body)
+    assert_equal "gpt-4o", json["model_id"]
+    assert_equal "gpt-4o", conversation.reload.model_id
+  end
+
+  test "update changes model_id via HTML and redirects" do
+    conversation = conversations(:gemini_chat)
+    patch conversation_path(conversation),
+      params: { model_id: "gpt-4o" }
+
+    assert_redirected_to conversation_path(conversation)
+    assert_equal "gpt-4o", conversation.reload.model_id
+  end
+
+  test "update returns 404 for a conversation belonging to a different session" do
+    other = conversations(:other_session_chat)
+    patch conversation_path(other),
+      params: { model_id: "gpt-4o" },
+      headers: { "Accept" => "application/json" }
+
+    assert_response :not_found
+  end
 end
