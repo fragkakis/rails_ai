@@ -87,7 +87,7 @@
       <button data-action="click->sidebar#open" class="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
-      <span class="text-sm font-medium text-gray-600 dark:text-gray-300 truncate max-w-[50%]"><%= @conversation&.title || "Rails AI Chat" %></span>
+      <span data-mobile-title class="text-sm font-medium text-gray-600 dark:text-gray-300 truncate max-w-[50%]"><%= @conversation&.title || "Rails AI Chat" %></span>
       <%= form_with url: conversations_path, method: :post, class: "inline" do |f| %>
         <input type="hidden" name="model_id" value="<%= @conversation&.model_id || Conversation::MODELS.values.first.first[:id] %>">
         <button type="submit" class="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
@@ -97,7 +97,7 @@
     </div>
 
     <% if @conversation %>
-      <div class="flex flex-col flex-1 min-h-0" data-controller="chat" data-chat-url-value="<%= conversation_messages_path(@conversation) %>" data-chat-retry-url-value="<%= retry_conversation_messages_path(@conversation) %>">
+      <div class="flex flex-col flex-1 min-h-0" data-controller="chat" data-chat-url-value="<%= conversation_messages_path(@conversation) %>" data-chat-retry-url-value="<%= retry_conversation_messages_path(@conversation) %>" <%= "data-chat-generate-title-url-value=\"#{generate_title_conversation_path(@conversation)}\"".html_safe if @conversation.title.blank? %> data-chat-conversation-uuid-value="<%= @conversation.uuid %>">
         <%# Messages %>
         <div class="flex-1 overflow-y-auto" data-chat-target="messages">
           <% @messages.each do |message| %>

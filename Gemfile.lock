@@ -175,8 +175,10 @@ GEM
     mcp (0.7.1)
       json-schema (>= 4.1)
     mini_mime (1.1.5)
-    minitest (5.27.0)
-    mocha (2.8.2)
+    minitest (6.0.2)
+      drb (~> 2.0)
+      prism (~> 1.5)
+    mocha (3.0.2)
       ruby2_keywords (>= 0.0.5)
     msgpack (1.8.0)
     multipart-post (2.4.1)
@@ -427,8 +429,8 @@ DEPENDENCIES
   importmap-rails
   jbuilder
   kamal
-  minitest (~> 5.0)
-  mocha (~> 2.0)
+  minitest (~> 6.0)
+  mocha (~> 3.0)
   propshaft
   puma (>= 5.0)
   rails (~> 8.1.2)

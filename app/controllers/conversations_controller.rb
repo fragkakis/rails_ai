@@ -28,6 +28,20 @@ class ConversationsController < ApplicationController
     redirect_to conversation_path(conversation)
   end
 
+  def generate_title
+    conversation = Conversation.for_session(current_session_id).find_by!(uuid: params[:id])
+    content = params[:content].to_s.truncate(500)
+
+    chat = RubyLLM.chat(model: "gemini-2.5-flash")
+    response = chat.ask("Generate a concise title (max 6 words) for a conversation that starts with this message. Return only the title, no quotes or punctuation.\n\nMessage: #{content}")
+    title = response.content.strip.truncate(100)
+
+    conversation.update!(title: title)
+    render json: { title: title }
+  rescue => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
   def destroy
     Conversation.for_session(current_session_id).find_by!(uuid: params[:id]).destroy
     redirect_to root_path

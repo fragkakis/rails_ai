@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   root "conversations#index"
 
   resources :conversations, only: [ :show, :create, :destroy, :update ] do
+    post :generate_title, on: :member
     resources :messages, only: [ :create ] do
       collection do
         post :retry

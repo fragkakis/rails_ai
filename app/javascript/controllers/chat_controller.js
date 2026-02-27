@@ -76,14 +76,25 @@ function balanceCodeFences(text) {
   return lines.join('\n')
 }
 
+function stripOuterMarkdownFence(text) {
+  const match = text.match(/^([\s\S]*?\n?)```(?:markdown|md)\n([\s\S]*)$/)
+  if (match) {
+    const before = match[1].trim()
+    let inner = match[2]
+    inner = inner.replace(/\n```\s*$/, '')
+    return before ? before + '\n\n' + inner : inner
+  }
+  return text
+}
+
 function renderMarkdown(text) {
-  const raw = marked.parse(balanceCodeFences(text))
+  const raw = marked.parse(balanceCodeFences(stripOuterMarkdownFence(text)))
   return DOMPurify.sanitize(raw)
 }
 
 export default class extends Controller {
   static targets = ["messages", "input", "submit", "form", "model", "stop"]
-  static values = { url: String, retryUrl: String }
+  static values = { url: String, retryUrl: String, generateTitleUrl: String, conversationUuid: String }
 
   connect() {
     this.autoResize()
@@ -116,6 +127,7 @@ export default class extends Controller {
     this.submitTarget.disabled = true
     this.submitTarget.classList.add("hidden")
     this.stopTarget.classList.remove("hidden")
+    this.maybeGenerateTitle(content)
     this.streamResponse(content, contentEl)
   }
 
@@ -140,6 +152,7 @@ export default class extends Controller {
     this.appendMessage("user", content)
     const contentEl = this.appendMessage("assistant", "")
 
+    this.maybeGenerateTitle(content)
     this.streamResponse(content, contentEl)
   }
 
@@ -414,6 +427,40 @@ export default class extends Controller {
         retryButtons[retryButtons.length - 1].classList.remove("hidden")
       }
     }
+  }
+
+  maybeGenerateTitle(content) {
+    if (!this.hasGenerateTitleUrlValue || !this.generateTitleUrlValue) return
+
+    const url = this.generateTitleUrlValue
+    // Clear the value so it only fires once
+    this.generateTitleUrlValue = ""
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": csrfToken
+      },
+      body: new URLSearchParams({ content })
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!data?.title) return
+
+        // Update sidebar link
+        const sidebarLink = document.querySelector(`[data-conversation-id="${this.conversationUuidValue}"]`)
+        if (sidebarLink) sidebarLink.textContent = data.title
+
+        // Update mobile header
+        const mobileTitle = document.querySelector("[data-mobile-title]")
+        if (mobileTitle) mobileTitle.textContent = data.title
+      })
+      .catch(() => {
+        // Title generation failed silently — truncated fallback remains
+      })
   }
 
   changeModel(event) {
