@@ -5,6 +5,10 @@ Rails.application.routes.draw do
   root "conversations#index"
 
   resources :conversations, only: [ :show, :create, :destroy, :update ] do
-    resources :messages, only: [ :create ]
+    resources :messages, only: [ :create ] do
+      collection do
+        post :retry
+      end
+    end
   end
 end

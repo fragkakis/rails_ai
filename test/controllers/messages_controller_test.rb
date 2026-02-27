@@ -51,4 +51,81 @@ class MessagesControllerTest < ActionDispatch::IntegrationTest
       end
     end
   end
+
+  # --- Retry tests ---
+
+  test "retry deletes last assistant message and streams new response" do
+    fake_chat = mock("chat")
+    fake_chat.stubs(:add_message)
+    fake_chat.stubs(:ask).with("Hello, how are you?")
+      .yields(OpenStruct.new(content: "New response"))
+
+    RubyLLM.stubs(:chat).returns(fake_chat)
+
+    old_assistant_message = messages(:gemini_assistant_msg)
+    old_assistant_id = old_assistant_message.id
+
+    post retry_conversation_messages_path(@conversation),
+      headers: { "Content-Type" => "application/x-www-form-urlencoded" }
+
+    # Old assistant message should be destroyed
+    assert_not Message.exists?(old_assistant_id), "Expected old assistant message to be destroyed"
+
+    # New assistant message should be created
+    new_assistant_message = @conversation.messages.where(role: "assistant").last
+    assert new_assistant_message.present?, "Expected a new assistant message"
+    assert_equal "New response", new_assistant_message.content
+  end
+
+  test "retry returns 422 when no user message exists" do
+    # Create a conversation with no messages
+    conversation = Conversation.create!(model_id: "gemini-2.5-flash", session_id: SESSION_ID)
+
+    post retry_conversation_messages_path(conversation),
+      headers: { "Content-Type" => "application/x-www-form-urlencoded" }
+
+    assert_response :unprocessable_entity
+  end
+
+  test "retry with client disconnect saves partial response" do
+    fake_chat = mock("chat")
+    fake_chat.stubs(:add_message)
+    fake_chat.stubs(:ask).with("Hello, how are you?")
+      .yields(OpenStruct.new(content: "Partial "))
+      .raises(ActionController::Live::ClientDisconnected)
+
+    RubyLLM.stubs(:chat).returns(fake_chat)
+
+    old_assistant_message = messages(:gemini_assistant_msg)
+    old_assistant_id = old_assistant_message.id
+
+    post retry_conversation_messages_path(@conversation),
+      headers: { "Content-Type" => "application/x-www-form-urlencoded" }
+
+    # Old assistant message should be destroyed
+    assert_not Message.exists?(old_assistant_id)
+
+    # Partial new assistant message should be saved
+    new_assistant_message = @conversation.messages.where(role: "assistant").last
+    assert old_assistant_message.present?, "Expected a partial assistant message to be saved"
+    assert_equal "Partial ", new_assistant_message.content
+  end
+
+  test "retry for BYOK provider without API key returns 422" do
+    openai_conversation = conversations(:openai_chat)
+
+    post retry_conversation_messages_path(openai_conversation),
+      headers: { "Content-Type" => "application/x-www-form-urlencoded" }
+
+    assert_response :unprocessable_entity
+  end
+
+  test "retry cannot access another session's conversation" do
+    other_conversation = conversations(:other_session_chat)
+
+    post retry_conversation_messages_path(other_conversation),
+      headers: { "Content-Type" => "application/x-www-form-urlencoded" }
+
+    assert_response :not_found
+  end
 end

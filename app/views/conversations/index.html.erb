@@ -97,7 +97,7 @@
     </div>
 
     <% if @conversation %>
-      <div class="flex flex-col flex-1 min-h-0" data-controller="chat" data-chat-url-value="<%= conversation_messages_path(@conversation) %>">
+      <div class="flex flex-col flex-1 min-h-0" data-controller="chat" data-chat-url-value="<%= conversation_messages_path(@conversation) %>" data-chat-retry-url-value="<%= retry_conversation_messages_path(@conversation) %>">
         <%# Messages %>
         <div class="flex-1 overflow-y-auto" data-chat-target="messages">
           <% @messages.each do |message| %>

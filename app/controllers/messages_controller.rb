@@ -13,24 +13,64 @@ class MessagesController < ApplicationController
     end
 
     # Check for API key before starting SSE stream
+    api_key = check_api_key
+    return unless api_key != false
+
+    set_sse_headers
+
+    chat = build_chat(@conversation, api_key)
+    stream_llm_response(content, chat)
+  end
+
+  def retry
+    @conversation = Conversation.for_session(current_session_id).find_by!(uuid: params[:conversation_id])
+
+    last_user_msg = @conversation.messages.where(role: "user").order(:created_at).last
+    unless last_user_msg
+      render json: { error: "No user message to retry" }, status: :unprocessable_entity
+      return
+    end
+
+    # Delete last assistant message if it exists
+    last_assistant = @conversation.messages.where(role: "assistant").order(:created_at).last
+    last_assistant&.destroy
+
+    # Check for API key before starting SSE stream
+    api_key = check_api_key
+    return unless api_key != false
+
+    set_sse_headers
+
+    chat = build_chat(@conversation, api_key)
+    stream_llm_response(last_user_msg.content, chat)
+  end
+
+  private
+
+  def check_api_key
     if @conversation.requires_api_key?
       api_key = request.headers["X-Api-Key"]
       if api_key.blank?
         render json: { error: "API key required. Add your #{@conversation.provider_name} key in the API Keys panel." }, status: :unprocessable_entity
-        return
+        return false
       end
+      api_key
+    else
+      nil
     end
+  end
 
+  def set_sse_headers
     response.headers["Content-Type"] = "text/event-stream"
     response.headers["Cache-Control"] = "no-cache"
     response.headers["X-Accel-Buffering"] = "no"
+  end
 
+  def stream_llm_response(content, chat)
     assistant_content = +""
 
     begin
-      chat = build_chat(@conversation, api_key)
-
-      # Load prior messages (all except the last user message we just created)
+      # Load prior messages (all except the last user message — ask() will send it)
       prior_messages = @conversation.messages.order(:created_at).to_a
       prior_messages.pop # remove the last user message — ask() will send it
 
@@ -66,8 +106,6 @@ class MessagesController < ApplicationController
       response.stream.close
     end
   end
-
-  private
 
   def build_chat(conversation, api_key = nil)
     model = conversation.model_id

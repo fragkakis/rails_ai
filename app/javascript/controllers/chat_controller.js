@@ -83,11 +83,12 @@ function renderMarkdown(text) {
 
 export default class extends Controller {
   static targets = ["messages", "input", "submit", "form", "model", "stop"]
-  static values = { url: String }
+  static values = { url: String, retryUrl: String }
 
   connect() {
     this.autoResize()
     this.renderExistingMessages()
+    this.updateRetryButtonVisibility()
     this.sendInitialContent()
   }
 
@@ -138,6 +139,30 @@ export default class extends Controller {
     const contentEl = this.appendMessage("assistant", "")
 
     this.streamResponse(content, contentEl)
+  }
+
+  retry(event) {
+    if (this.abortController) return
+
+    if (this.requiresKeyWithout()) {
+      this.openKeysPanel()
+      return
+    }
+
+    // Find the last assistant message row and its content element
+    const allAssistantEls = this.messagesTarget.querySelectorAll('[data-role="assistant"]')
+    if (allAssistantEls.length === 0) return
+
+    const lastAssistantEl = allAssistantEls[allAssistantEls.length - 1]
+    lastAssistantEl.innerHTML = ""
+
+    // Hide retry button, show stop button
+    this.updateRetryButtonVisibility(true)
+    this.submitTarget.disabled = true
+    this.submitTarget.classList.add("hidden")
+    this.stopTarget.classList.remove("hidden")
+
+    this.streamResponse(null, lastAssistantEl, { isRetry: true })
   }
 
   stop() {
@@ -194,6 +219,17 @@ export default class extends Controller {
     }
 
     messageDiv.appendChild(textDiv)
+
+    if (role === "assistant") {
+      const retryBtn = document.createElement("button")
+      retryBtn.setAttribute("data-retry-button", "")
+      retryBtn.setAttribute("data-action", "click->chat#retry")
+      retryBtn.className = "hidden mt-1 text-gray-400 hover:text-gray-600 transition"
+      retryBtn.title = "Regenerate response"
+      retryBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      messageDiv.appendChild(retryBtn)
+    }
+
     container.appendChild(messageDiv)
     row.appendChild(container)
     this.messagesTarget.appendChild(row)
@@ -241,7 +277,7 @@ export default class extends Controller {
     })
   }
 
-  async streamResponse(content, textEl) {
+  async streamResponse(content, textEl, options = {}) {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
     const apiKey = this.getApiKey()
 
@@ -257,11 +293,14 @@ export default class extends Controller {
 
     this.abortController = new AbortController()
 
+    const url = options.isRetry ? this.retryUrlValue : this.urlValue
+    const body = options.isRetry ? "" : new URLSearchParams({ content })
+
     try {
-      const response = await fetch(this.urlValue, {
+      const response = await fetch(url, {
         method: "POST",
         headers,
-        body: new URLSearchParams({ content }),
+        body,
         signal: this.abortController.signal
       })
 
@@ -330,6 +369,16 @@ export default class extends Controller {
     this.stopTarget.classList.add("hidden")
     this.abortController = null
     this.inputTarget.focus()
+    this.updateRetryButtonVisibility()
+  }
+
+  updateRetryButtonVisibility(hideAll = false) {
+    const buttons = this.messagesTarget.querySelectorAll("[data-retry-button]")
+    buttons.forEach(btn => btn.classList.add("hidden"))
+
+    if (!hideAll && buttons.length > 0) {
+      buttons[buttons.length - 1].classList.remove("hidden")
+    }
   }
 
   changeModel(event) {
