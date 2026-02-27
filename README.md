@@ -2,6 +2,10 @@
 
 A ChatGPT-style chat interface built with Rails 8 and the [ruby_llm](https://github.com/crmne/ruby_llm) gem. Supports multiple LLM providers with real-time streaming responses.
 
+## Demo
+
+You can it live in [railschat.org](https://www.railschat.org/).
+
 ## Features
 
 - **Real-time streaming** — Server-Sent Events (SSE) for token-by-token response streaming
