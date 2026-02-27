@@ -60,3 +60,7 @@ This starts the Rails server and Tailwind CSS watcher via foreman.
 - **SSE streaming** — `MessagesController#create` uses `ActionController::Live` to stream LLM responses. The client reads via `fetch` + `ReadableStream` (not EventSource) to allow POST requests
 - **Stimulus controllers** — `chat_controller.js` handles streaming and model switching; `api_keys_controller.js` manages BYOK key storage
 - **Session isolation** — Conversations scoped by `session[:visitor_id]`, assigned in `ApplicationController`
+
+## Acknowledgements
+
+This software was made possible using open source software, so credits to the contributors of all the libraries in the [Gemfile](https://github.com/fragkakis/railschat/blob/main/Gemfile). Special thanks to the contributors of [Ruby on Rails](https://rubyonrails.org/), [Kamal](https://kamal-deploy.org/) and [Ruby LLM](https://rubyllm.com/).
