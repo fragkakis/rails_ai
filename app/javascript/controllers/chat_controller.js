@@ -110,6 +110,7 @@ export default class extends Controller {
     url.searchParams.delete("content")
     window.history.replaceState({}, "", url)
 
+    this.updateRetryButtonVisibility(true)
     this.appendMessage("user", content)
     const contentEl = this.appendMessage("assistant", "")
     this.submitTarget.disabled = true
@@ -135,6 +136,7 @@ export default class extends Controller {
     this.submitTarget.classList.add("hidden")
     this.stopTarget.classList.remove("hidden")
 
+    this.updateRetryButtonVisibility(true)
     this.appendMessage("user", content)
     const contentEl = this.appendMessage("assistant", "")
 
@@ -163,6 +165,19 @@ export default class extends Controller {
     this.stopTarget.classList.remove("hidden")
 
     this.streamResponse(null, lastAssistantEl, { isRetry: true })
+  }
+
+  async copy(event) {
+    const btn = event.currentTarget
+    const messageDiv = btn.closest(".flex-1")?.querySelector('[data-role="assistant"]')
+    if (!messageDiv) return
+
+    const text = messageDiv.innerText
+    await navigator.clipboard.writeText(text)
+
+    const originalHTML = btn.innerHTML
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+    setTimeout(() => { btn.innerHTML = originalHTML }, 2000)
   }
 
   stop() {
@@ -221,13 +236,26 @@ export default class extends Controller {
     messageDiv.appendChild(textDiv)
 
     if (role === "assistant") {
+      const btnGroup = document.createElement("div")
+      btnGroup.className = "flex gap-1 mt-1"
+
+      const copyBtn = document.createElement("button")
+      copyBtn.setAttribute("data-copy-button", "")
+      copyBtn.setAttribute("data-action", "click->chat#copy")
+      copyBtn.className = "hidden text-gray-400 hover:text-gray-600 transition"
+      copyBtn.title = "Copy to clipboard"
+      copyBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+      btnGroup.appendChild(copyBtn)
+
       const retryBtn = document.createElement("button")
       retryBtn.setAttribute("data-retry-button", "")
       retryBtn.setAttribute("data-action", "click->chat#retry")
-      retryBtn.className = "hidden mt-1 text-gray-400 hover:text-gray-600 transition"
+      retryBtn.className = "hidden text-gray-400 hover:text-gray-600 transition"
       retryBtn.title = "Regenerate response"
       retryBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-      messageDiv.appendChild(retryBtn)
+      btnGroup.appendChild(retryBtn)
+
+      messageDiv.appendChild(btnGroup)
     }
 
     container.appendChild(messageDiv)
@@ -373,11 +401,18 @@ export default class extends Controller {
   }
 
   updateRetryButtonVisibility(hideAll = false) {
-    const buttons = this.messagesTarget.querySelectorAll("[data-retry-button]")
-    buttons.forEach(btn => btn.classList.add("hidden"))
+    const retryButtons = this.messagesTarget.querySelectorAll("[data-retry-button]")
+    retryButtons.forEach(btn => btn.classList.add("hidden"))
 
-    if (!hideAll && buttons.length > 0) {
-      buttons[buttons.length - 1].classList.remove("hidden")
+    const copyButtons = this.messagesTarget.querySelectorAll("[data-copy-button]")
+
+    if (hideAll) {
+      copyButtons.forEach(btn => btn.classList.add("hidden"))
+    } else {
+      copyButtons.forEach(btn => btn.classList.remove("hidden"))
+      if (retryButtons.length > 0) {
+        retryButtons[retryButtons.length - 1].classList.remove("hidden")
+      }
     }
   }
 
